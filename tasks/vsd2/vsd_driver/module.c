@@ -109,7 +109,7 @@ static long vsd_ioctl_get_size(vsd_ioctl_get_size_arg_t __user *uarg)
 static long vsd_ioctl_set_size(vsd_ioctl_set_size_arg_t __user *uarg)
 {
     vsd_ioctl_set_size_arg_t arg;
-    if (0/* TODO device is currently mapped */)
+    if (vsd_dev->mmap_count > 0)
         return -EBUSY;
 
     if (copy_from_user(&arg, uarg, sizeof(arg)))
@@ -168,7 +168,18 @@ static int map_vmalloc_range(struct vm_area_struct *uvma, void *kaddr, size_t si
      * continuous. So we need to map each vmalloced page separetely.
      * Use vmalloc_to_page and vm_insert_page functions for this.
      */
-    // TODO
+    struct page *p;
+    int err_code;
+    
+    size_t p_cnt = size / PAGE_SIZE;
+    if (size % PAGE_SIZE > 0) p_cnt++;
+    
+    for (; p_cnt > 0; p_cnt--, kaddr += PAGE_SIZE, uaddr += PAGE_SIZE)
+    {
+    	p = vmalloc_to_page(kaddr);
+    	err_code = vm_insert_page(uvma, uaddr, p);
+    	if (err_code) return err_code;
+    }
 
     uvma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
     return 0;
