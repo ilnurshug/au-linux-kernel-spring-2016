@@ -76,6 +76,8 @@ static ssize_t vsd_dev_write(char *src, size_t src_size, size_t offset) {
     return src_size;
 }
 
+static void vsd_dev_cmd_rw_after(ssize_t ret);
+
 static void vsd_dev_set_size(size_t size)
 {
     // TODO implement command
@@ -84,6 +86,17 @@ static void vsd_dev_set_size(size_t size)
     // Ensure that woken up task observes your writes
     // to shared memory (hwregs).
     // If new size is > current size then return -EINVAL.
+    
+    if (size > buf_size) 
+    {
+        vsd_dev_cmd_rw_after(-EINVAL);
+    }
+    else
+    {
+        dev.buf_size = size;
+        dev.hwregs->dev_size = size;
+        vsd_dev_cmd_rw_after(0);
+    }
 }
 
 static void vsd_dev_cmd_rw_after(ssize_t ret)
@@ -124,6 +137,7 @@ static int vsd_dev_cmd_poll_kthread_func(void *data)
             case VSD_CMD_SET_SIZE:
                 // TODO call vsd_dev_set_size
                 // with right arguments
+                vsd_dev_set_size(dev.hwregs->dev_offset);
                 break;
         }
 

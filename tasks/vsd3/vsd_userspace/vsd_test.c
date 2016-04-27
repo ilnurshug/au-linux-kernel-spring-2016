@@ -13,12 +13,13 @@
 
 int main()
 {
+    printf("1\n");
     TEST(!vsd_init());
-
+    printf("2\n");
     size_t vsd_size = 0;
     TEST(!vsd_get_size(&vsd_size));
     TEST(vsd_set_size(vsd_size * 2));
-
+    printf("3\n");
     unsigned char *vsd_w_buf = malloc(vsd_size);
     unsigned char *vsd_r_buf = calloc(1, vsd_size);
     size_t i = 0;
